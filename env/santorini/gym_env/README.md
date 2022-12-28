@@ -4,4 +4,4 @@ This is an OpenAI Gym environment for the board game [Santorini](https://boardga
 
 | Environment Id | Observation Space |Action Space| Reward Range | tStepL | Trials | rTresh |
 | ------ | ------ |------ | ------ |------ | ------ |------ |
-| Santorini |Box(5,5)|Discrete(81)|(-inf, inf) | 9 | ? | None |
+| Santorini |Box(5,5)|Discrete(128)|(-inf, inf) | 9 | ? | None |
