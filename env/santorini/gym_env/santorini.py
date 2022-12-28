@@ -8,6 +8,18 @@ RenderFrame = TypeVar("RenderFrame")
 
 
 class Santorini(gym.Env):
+    """
+    Reuseable OpenAI Gym environment for the Santorini board game.
+    Official rules can be found at: https://roxley.com/products/santorini
+
+    Note that we currently have three modifications to the official game rules:
+    1. We randomly place the worker pieces at the start of the game.
+    2. We don't support God powers.
+    3. We have an unlimited number of building pieces.
+
+    All three rules should not have a significant effect on gameplay or winning probability between the two players.
+
+    """
     def __init__(self):
         self.board = [[0 for _ in range(5)] for _ in range(5)]
         self.occupied_locations = set()
