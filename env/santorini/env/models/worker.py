@@ -1,14 +1,8 @@
-from enum import Enum
+"""
+Represents a worker piece. Board handles this class (composition).
+"""
 from typing import Set, Tuple
 import random
-
-
-class BoardHeight(Enum):
-    ZERO = 0
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
 
 
 class Worker:
@@ -24,13 +18,3 @@ class Worker:
     @staticmethod
     def _get_random_board_location():
         return tuple((random.randint(0, 4), random.randint(0, 4)))
-
-
-class BoardUtils:
-    @staticmethod
-    def pad_width(string: str, pad_length: int) -> str:
-        padding = pad_length - len(string)
-        string = " " * (padding // 2) + string + " " * (padding // 2)
-        if padding % 2 == 1:
-            string += " "
-        return string
