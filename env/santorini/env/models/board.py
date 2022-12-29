@@ -8,21 +8,23 @@ Also provides helper utilities for env.
 from typing import List, Dict
 from worker import Worker
 from util import BoardUtils
+import numpy as np
+from numpy.typing import ArrayLike
 
 
 class Board:
     def __init__(self):
         # keeps track of board height and buildings in 5x5 grid
-        self.board_height: List[List[int]] = [[0 for _ in range(5)] for _ in range(5)]
+        self.board_height: ArrayLike = np.zeros((5, 5), dtype=np.uint8)
 
         # worker occupied locations
         self.occupied_locations = set()
 
         # keeps track of both workers of both players
         self.workers: Dict[int, List['Worker']] = {
-            1: [Worker(player_id=0, worker_id=0, occupied=self.occupied_locations),
+            0: [Worker(player_id=0, worker_id=0, occupied=self.occupied_locations),
                              Worker(player_id=0, worker_id=1, occupied=self.occupied_locations)],
-            2: [Worker(player_id=1, worker_id=0, occupied=self.occupied_locations),
+            1: [Worker(player_id=1, worker_id=0, occupied=self.occupied_locations),
                                  Worker(player_id=1, worker_id=1, occupied=self.occupied_locations)]
         }  # randomize worker placement for now, later can train RL to do it
 
@@ -48,7 +50,7 @@ class Board:
     def _get_board_position_string(self, x: int, y: int, worker_string: str) -> str:
         if self.board_height[x][y] == 4:
             return "[[[ O ]]]"
-        return "[" * self.board_height[x][y] + worker_string + "]" * self.board_height[x][y]
+        return ("[" * self.board_height[x][y]) + worker_string + ("]" * self.board_height[x][y])
 
     def reset(self):
         self.board_height: List[List[int]] = [[0 for _ in range(5)] for _ in range(5)]

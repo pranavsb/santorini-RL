@@ -90,7 +90,11 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
 
     def step(self, action: ActionType) -> None:
-        pass
+        if (
+                self.terminations[self.agent_selection]
+                or self.truncations[self.agent_selection]
+        ):
+            return self._was_dead_step(action)
 
     def reset(
             self,
