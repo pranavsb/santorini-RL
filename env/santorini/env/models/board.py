@@ -5,9 +5,9 @@ Handles the Worker pieces and keeps track of their positions and building status
 Also provides helper utilities for env.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from worker import Worker
-from util import BoardUtils
+from util import *
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -28,13 +28,39 @@ class Board:
                                  Worker(player_id=1, worker_id=1, occupied=self.occupied_locations)]
         }  # randomize worker placement for now, later can train RL to do it
 
+    def is_legal_action(self, action: int, player_id: int) -> bool:
+        # TODO unit tests for game logic
+        worker_id, move_direction, build_direction = action_to_move(action)
+        worker = self.workers[player_id][worker_id]
+        move_coordinate = direction_to_coordinate(move_direction)
+        move_to_coordinate = (worker.location[0] + move_coordinate[0], worker.location[1] + move_coordinate[1])
+        if not self._can_move(worker.location, move_to_coordinate):
+            # worker could not be moved to the specified move location
+            return False
+        build_coordinate = direction_to_coordinate(build_direction)
+        build_to_coordinate = (move_to_coordinate + build_coordinate[0], move_to_coordinate + build_coordinate[1])
+        if not self._can_build(worker.location, build_to_coordinate):
+            # worker could move but not build at specified location
+            return False
+        return True
+
+    def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
+        return within_grid_bounds(to_coordinate) and self._height_jump_valid(from_coordinate, to_coordinate) and self._not_occupied(to_coordinate)
+
+    def _can_build(self, start_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
+        # make sure that if it is occupied, it is due to the same worker piece that's being played
+        if start_coordinate == to_coordinate:
+            return True
+        # make sure dome doesn't already exist
+        return self._not_occupied(to_coordinate) and self.board_height[to_coordinate[0]][to_coordinate[1]] < 4
+
     def generate_printable_board(self) -> List[List[str]]:
         printable_board = [["" for _ in range(5)] for _ in range(5)]
         for i in range(5):
             for j in range(5):
                 worker_string = self._get_worker_string(i, j)
                 board_string = self._get_board_position_string(i, j, worker_string)
-                printable_board[i][j] = BoardUtils.pad_width(board_string, 10)
+                printable_board[i][j] = pad_width(board_string, 10)
 
         return printable_board
 
@@ -62,3 +88,28 @@ class Board:
             2: [Worker(player_id=1, worker_id=0, occupied=self.occupied_locations),
                 Worker(player_id=1, worker_id=1, occupied=self.occupied_locations)]
         }
+
+    def move_and_build(self, action: int, player_id: int) -> None:
+        worker_id, move_direction, build_direction = action_to_move(action)
+
+        # update worker location
+        move_coordinate = direction_to_coordinate(move_direction)
+        worker = self.workers[player_id][worker_id]
+        worker.location = (worker.location[0] + move_coordinate[0], worker.location[1] + move_coordinate[1])
+
+        # build on the board
+        build_coordinate = direction_to_coordinate(build_direction)
+        build_location = (worker.location[0] + build_coordinate[0], worker.location[1] + build_coordinate[1])
+        self.board_height[build_location[0]][build_location[1]] += 1
+
+    def _height_jump_valid(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
+        return self.board_height[from_coordinate[0]][from_coordinate[1]] + 1 >= self.board_height[to_coordinate[0]][to_coordinate[1]]
+
+    def _not_occupied(self, coordinate: Tuple[int, int]) -> bool:
+        # worker is present
+        for worker_id in self.workers:
+            for worker in self.workers[worker_id]:
+                if worker.location == coordinate:
+                    return False
+        # dome is present
+        return self.board_height[coordinate[0]][coordinate[1]] == 4

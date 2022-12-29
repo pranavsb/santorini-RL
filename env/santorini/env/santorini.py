@@ -90,11 +90,22 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
 
     def step(self, action: ActionType) -> None:
+        return
         if (
                 self.terminations[self.agent_selection]
                 or self.truncations[self.agent_selection]
         ):
             return self._was_dead_step(action)
+
+        current_agent = self.agent_selection
+        # chosen_move = action_to_move(action)
+        # assert self.board.is_legal_move(action)
+        # TODO how to handle if agent plays when its not its turn?
+        assert self.board.is_legal_action(action, self.agents.index(current_agent))
+        self.board.move_and_build(action, self.agents.index(current_agent))
+
+        # TODO test workers trapped by checking no legal moves left
+        # TODO create action mask by checking all possible legal moves and see how to update self.obs.action_mask
 
     def reset(
             self,
