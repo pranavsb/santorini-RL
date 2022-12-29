@@ -24,6 +24,14 @@
     | Observation Values | [0, 4]                                        |
 
 
+    Action is 2 * 8 * 8 which represents choice of worker piece, direction to move and direction to build.
+    This is represented as a Discrete(128) action space.
+
+    Observation consists of three 5x5 planes. The first 5x5 plane is 1 for the agent's worker pieces and 0 otherwise.
+    The second 5x5 plane is 1 for the opponent's worker pieces and 0 otherwise. The third 5x5 plane represents the height
+    of the board at a given cell in the grid - this ranges from 0 (no buildings) to 4 (dome).
+
+    Reward is 10 for winning, -10 for losing and -0.1 for every time step.
 
 """
 import gymnasium
@@ -130,6 +138,8 @@ class raw_env(AECEnv):
             return_info: bool = False,
             options: Optional[dict] = None,
     ) -> None:
+        self.has_reset = True
+        self.agents = self.possible_agents[:]
         # reset game state
         self.board.reset()
 
