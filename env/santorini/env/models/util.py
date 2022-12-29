@@ -66,6 +66,23 @@ def action_to_move(action: int) -> Tuple[int, str, str]:
     return worker_id, move_direction, build_direction
 
 
+def move_to_action(move: Tuple[int, int, int]) -> int:
+    assert 0 <= move[0] < 2, "Worker choice is invalid, can't convert move to action."
+    action = 64 * move[0]
+
+    assert 0 <= move[1] < 8, "Move direction invalid, can't convert move to action."
+    action += (move[1] * 8)
+
+    assert 0 <= move[2] < 8, "Build direction invalid, can't convert move to action."
+    action += move[2]
+
+    return action
+
+
+def agent_id_to_name(agent_id: int) -> str:
+    return f"player_{agent_id}"
+
+
 def index_to_direction(move_build_index: int) -> str:
     assert 0 <= move_build_index < 8, "Invalid input while converting move/build index to direction."
     return INDEX_TO_DIRECTION[move_build_index]

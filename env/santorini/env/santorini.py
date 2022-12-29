@@ -37,6 +37,7 @@ from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 
 from models.board import Board
+from util import agent_id_to_name
 
 
 def env(render_mode=None):
@@ -98,14 +99,30 @@ class raw_env(AECEnv):
             return self._was_dead_step(action)
 
         current_agent = self.agent_selection
+        current_player_id = self.agents.index(current_agent)
         # chosen_move = action_to_move(action)
         # assert self.board.is_legal_move(action)
         # TODO how to handle if agent plays when its not its turn?
-        assert self.board.is_legal_action(action, self.agents.index(current_agent))
-        self.board.move_and_build(action, self.agents.index(current_agent))
+        assert self.board.is_legal_action(action, current_player_id)
+        self.board.move_and_build(action, current_player_id)
 
         # TODO test workers trapped by checking no legal moves left
+        opponent_has_legal_move = self.board.any_legal_moves()
+        # note that credit assignment is complicated as move+build is one action and the winning move is a "move" where
+        # the build is inconsequential, hopefully it shouldn't be a big deal
+        current_player_won = self.board.has_won()  # only current player's worker can be on level 3 since its their turn
         # TODO create action mask by checking all possible legal moves and see how to update self.obs.action_mask
+
+        game_over = not opponent_has_legal_move or current_player_won
+        if game_over:
+            self.set_game_result(current_player_id, reward_scaling_factor=10)
+        else:
+            # small negative reward to incentivize faster game completion
+            self.rewards[current_agent] = -0.1
+
+        self.agent_selection = (
+            self._agent_selector.next()
+        )  # Give turn to the next agent
 
     def reset(
             self,
@@ -126,6 +143,14 @@ class raw_env(AECEnv):
         self._agent_selector.reinit(self.agents)
         self._agent_selector.reset()
         self.agent_selection = self._agent_selector.reset()
+
+    def set_game_result(self, winning_player_id: int, reward_scaling_factor=1):
+        reward = reward_scaling_factor
+        self.rewards[agent_id_to_name(1)] = reward if winning_player_id == 0 else -reward
+        self.rewards[agent_id_to_name(2)] = reward if winning_player_id == 1 else -reward
+        for i in self.agents:
+            self.terminations[i] = True
+            self.infos[i] = {"legal_moves": []}
 
     def render(self) -> None:
         """

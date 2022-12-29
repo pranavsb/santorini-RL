@@ -44,7 +44,34 @@ class Board:
             return False
         return True
 
+    def any_legal_moves(self, player_id: int) -> bool:
+        return any(self.get_legal_moves(player_id, any_legal=True))
+
+    def get_legal_moves(self, player_id: int, any_legal: bool = False) -> List[int]:
+        workers = self.workers[player_id]
+        legal_moves = []
+        for worker_id in range(2):
+            for move_direction in range(8):
+                for build_direction in range(8):
+                    action = move_to_action(tuple((worker_id, move_direction, build_direction)))
+                    if self.is_legal_action(action, player_id):
+                        legal_moves.append(action)
+                        if any_legal:
+                            # found one legal move, we can return early
+                            return legal_moves
+        return legal_moves
+
+    def has_won(self):
+        # returns if any worker is present on level 3, environment handles who winner should be
+        for player_id in range(2):
+            for worker in self.workers[player_id]:
+                x, y = worker.location[0], worker.location[1]
+                assert self.board_height[x][y] < 4, "how is worker standing on a dome?"
+                if self.board_height[x][y] == 3:
+                    return True
+
     def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
+        assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome?"
         return within_grid_bounds(to_coordinate) and self._height_jump_valid(from_coordinate, to_coordinate) and self._not_occupied(to_coordinate)
 
     def _can_build(self, start_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
