@@ -15,7 +15,7 @@
     |--------------------|-----------------------------------------------|
     | Actions            | Discrete                                      |
     | Parallel API       | No                                            |
-    | Manual Control     | No      # TODO                                |
+    | Manual Control     | No                                            |
     | Agents             | `agents= ['player_1', 'player_2']`            |
     | Agents             | 2                                             |
     | Action Shape       | (1)                                           |
@@ -31,8 +31,8 @@
     Observation space consists of three 5x5 planes, represented as Box(3, 5, 5). The first 5x5 plane is 1 for the
     agent's worker pieces and 0 otherwise. The second 5x5 plane is 1 for the opponent's worker pieces and 0 otherwise.
     The third 5x5 plane represents the height of the board at a given cell in the grid - this ranges from 0 (no buildings) to 4 (dome).
-    # TODO consider using a Dict space made up of multiple boxes instead. Should not make a big difference,
-    # though there are 5 * 5 * 3 wasted elements in each of the first two planes.
+    # TODO consider using a Dict space made up of multiple boxes instead. Should not make a big difference, though
+    # there are 5 * 5 * 3 wasted elements in each of the first two planes.
 
     Reward is 10 for winning, -10 for losing and -0.1 for every time step.
 
@@ -111,9 +111,8 @@ class raw_env(AECEnv):
 
         current_agent = self.agent_selection
         current_player_id = self.possible_agents.index(current_agent)
-        # chosen_move = action_to_move(action)
-        # assert self.board.is_legal_move(action)
-        # TODO how to handle if agent plays when its not its turn?
+
+        # if agent plays illegal move, the game immediately ends
         assert self.board.is_legal_action(action, current_player_id)
         self.board.move_and_build(action, current_player_id)
 
@@ -121,7 +120,6 @@ class raw_env(AECEnv):
         # note that credit assignment is complicated as move+build is one action and the winning move is a "move" where
         # the build is inconsequential, hopefully it shouldn't be a big deal
         current_player_won = self.board.has_won()  # only current player's worker can be on level 3 since its their turn
-        # TODO create action mask by checking all possible legal moves and see how to update self.obs.action_mask
 
         game_over = not opponent_has_legal_move or current_player_won
         if game_over:

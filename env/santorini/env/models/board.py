@@ -29,7 +29,6 @@ class Board:
         }  # randomize worker placement for now, later can train RL to do it
 
     def is_legal_action(self, action: int, player_id: int) -> bool:
-        # TODO unit tests for game logic
         worker_id, move_direction, build_direction = action_to_move(action)
         worker = self.workers[player_id][worker_id]
         move_coordinate = direction_to_coordinate(move_direction)
@@ -72,6 +71,7 @@ class Board:
                 assert self.board_height[x][y] < 4, "how is worker standing on a dome?"
                 if self.board_height[x][y] == 3:
                     return True
+        return False
 
     def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
         assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome?"
@@ -130,7 +130,9 @@ class Board:
         # build on the board
         build_coordinate = direction_to_coordinate(build_direction)
         build_location = (worker.location[0] + build_coordinate[0], worker.location[1] + build_coordinate[1])
-        self.board_height[build_location[0]][build_location[1]] += 1
+        # if build is out of bounds, the move is a winning one
+        if within_grid_bounds(build_location):
+            self.board_height[build_location[0]][build_location[1]] += 1
 
     def _height_jump_valid(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
         return self.board_height[from_coordinate[0]][from_coordinate[1]] + 1 >= self.board_height[to_coordinate[0]][to_coordinate[1]]

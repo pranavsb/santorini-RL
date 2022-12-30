@@ -15,16 +15,11 @@ class TestSantoriniGameLogic(unittest.TestCase):
         board.board_height += 1
         self.assertTrue(board.has_won(), "winners on level three.")
 
-    def test_detect_win_on_worker_move(self):
+    def test_detect_win_on_worker_jump(self):
         board = Board()
         # if no worker is at (0, 0), move one there
-        worker_at_origin = False
-        for player_id in range(2):
-            for worker in board.workers[player_id]:
-                if worker.location == (0, 0):
-                    worker_at_origin = True
-        if not worker_at_origin:
-            board.workers[0][0].location = (0, 0)
+
+        TestSantoriniGameLogic._move_worker(board, location=(0, 0))
 
         self.assertFalse(board.has_won(), "no winners on init.")
         board.board_height[0][0] += 1
@@ -33,6 +28,59 @@ class TestSantoriniGameLogic(unittest.TestCase):
         self.assertFalse(board.has_won(), "no winners on level two.")
         board.board_height[0][0] += 1
         self.assertTrue(board.has_won(), "winners on level three.")
+
+    def test_detect_win_on_worker_move_illegal_build(self):
+        board = TestSantoriniGameLogic._one_move_win_board()
+        # no winners yet
+        self.assertFalse(board.has_won())
+
+        # every move with worker 0 is a legal winning move, irrespective of build step
+        for action in range(64):
+            self.assertTrue(board.is_legal_action(action, 0))
+            board.move_and_build(action, 0)
+            self.assertTrue(board.has_won())
+            board = TestSantoriniGameLogic._one_move_win_board()
+
+    def test_no_win_on_height_zero(self):
+        board = TestSantoriniGameLogic._one_move_win_board()
+        # no winners yet
+        self.assertFalse(board.has_won())
+
+        # all other workers have no winning move
+        for action in range(65, 128):
+            # player 0 worker 1
+            if board.is_legal_action(action, 0):
+                board.move_and_build(action, 0)
+            self.assertFalse(board.has_won())
+            board = TestSantoriniGameLogic._one_move_win_board()
+        for action in range(128):
+            # player 1 both workers
+            if board.is_legal_action(action, 1):
+                board.move_and_build(action, 1)
+            self.assertFalse(board.has_won())
+            board = TestSantoriniGameLogic._one_move_win_board()
+
+    @staticmethod
+    def _one_move_win_board():
+        # once a move to level 3 is accomplished, the build part of the action doesn't matter
+        board = Board()
+        # move 4 workers to 4 corners of the board
+        TestSantoriniGameLogic._move_worker(board, 0, 0, location=(0, 0))
+        TestSantoriniGameLogic._move_worker(board, 0, 1, location=(4, 0))
+        TestSantoriniGameLogic._move_worker(board, 1, 0, location=(0, 4))
+        TestSantoriniGameLogic._move_worker(board, 1, 1, location=(4, 4))
+
+        # move player 0 worker 0 to (1, 1) and surround with level 3 towers
+        TestSantoriniGameLogic._move_worker(board, 0, 0, location=(1, 1))
+        for i in range(3):
+            for j in range(3):
+                board.board_height[i][j] = 3
+        board.board_height[1][1] = 2  # worker can jump one level up
+        return board
+
+    @staticmethod
+    def _move_worker(board, player_id=0, worker_id=0, location=(0, 0)):
+        board.workers[player_id][worker_id].location = location
 
 
 class Util(unittest.TestCase):
