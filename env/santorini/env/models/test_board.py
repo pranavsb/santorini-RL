@@ -30,6 +30,7 @@ class TestSantoriniGameLogic(unittest.TestCase):
         self.assertTrue(board.has_won(), "winners on level three.")
 
     def test_detect_win_on_worker_move_illegal_build(self):
+        # once a move to level 3 is accomplished, the build part of the action doesn't matter
         board = TestSantoriniGameLogic._one_move_win_board()
         # no winners yet
         self.assertFalse(board.has_won())
@@ -60,9 +61,86 @@ class TestSantoriniGameLogic(unittest.TestCase):
             self.assertFalse(board.has_won())
             board = TestSantoriniGameLogic._one_move_win_board()
 
+    def test_no_legal_actions(self):
+        board = TestSantoriniGameLogic._trapped_board()
+
+        for player_id in range(2):
+            self.assertFalse(board.any_legal_moves(player_id))
+            for action in range(128):
+                self.assertFalse(board.is_legal_action(action, player_id))
+
+        # check for level 2 towers
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] != 0:
+                    board.board_height[i][j] = 2
+
+        for player_id in range(2):
+            self.assertFalse(board.any_legal_moves(player_id))
+            for action in range(128):
+                self.assertFalse(board.is_legal_action(action, player_id))
+
+        # check for level 1 towers
+
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] != 0:
+                    board.board_height[i][j] = 1
+
+        for player_id in range(2):
+            for action in range(128):
+                self.assertTrue(board.any_legal_moves(player_id))
+
+    def test_legal_move_count(self):
+        # 3 move directions and it's a winning move so build doesn't matter: 3 * 8 * 4
+        board = TestSantoriniGameLogic._trapped_board(corner_height=2)
+
+        legal_action_count = 0
+        for player_id in range(2):
+            for action in range(128):
+                if board.is_legal_action(action, player_id):
+                    legal_action_count += 1
+        # 3 move directions * all build directions * 4 workers
+        self.assertEqual(legal_action_count, 3 * 8 * 4)
+
+    def test_legal_move_and_build_count(self):
+        # only three moves and either 5 or 8 build directions in a trapped board with worker tower height of 1 and rest 2
+        board = TestSantoriniGameLogic._trapped_board(corner_height=1)
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] != 1:
+                    board.board_height[i][j] = 2
+
+        legal_action_count = 0
+        for player_id in range(2):
+            for action in range(128):
+                if board.is_legal_action(action, player_id):
+                    legal_action_count += 1
+        # 5 build directions for 2 cardinal and 8 build directions for 1 diagonal, for 4 corner worker pieces
+        self.assertEqual(legal_action_count, (5 + 8 + 5) * 4)
+
+    def test_is_occupied(self):
+        board = Board()
+        TestSantoriniGameLogic._move_worker(board, 0, 0, location=(0, 0))
+        TestSantoriniGameLogic._move_worker(board, 0, 1, location=(1, 0))  # move worker adjacent
+        TestSantoriniGameLogic._move_worker(board, 1, 0, location=(0, 4))
+        TestSantoriniGameLogic._move_worker(board, 1, 1, location=(4, 4))
+
+        board.board_height[0][1] = 4  # dome
+        from_coordinate = (0, 0)
+
+        self.assertTrue(board._is_occupied((0, 1)))   # dome
+        self.assertFalse(board._can_move(from_coordinate, (0, 1)))
+
+        self.assertTrue(board._is_occupied((1, 0)))   # worker
+        self.assertFalse(board._can_move(from_coordinate, (1, 0)))
+
+        self.assertFalse(board._is_occupied((1, 1)))  # empty
+        self.assertTrue(board._can_move(from_coordinate, (1, 1)))
+
     @staticmethod
     def _one_move_win_board():
-        # once a move to level 3 is accomplished, the build part of the action doesn't matter
+        # surround player 0 worker 0 with level 3 towers in all 8 directions
         board = Board()
         # move 4 workers to 4 corners of the board
         TestSantoriniGameLogic._move_worker(board, 0, 0, location=(0, 0))
@@ -76,6 +154,24 @@ class TestSantoriniGameLogic(unittest.TestCase):
             for j in range(3):
                 board.board_height[i][j] = 3
         board.board_height[1][1] = 2  # worker can jump one level up
+        return board
+
+    @staticmethod
+    def _trapped_board(corner_height=0):
+        # trap all workers in all corners, blocked by towers too high to legally climb
+        board = Board()
+        # move 4 workers to 4 corners of the board
+        TestSantoriniGameLogic._move_worker(board, 0, 0, location=(0, 0))
+        TestSantoriniGameLogic._move_worker(board, 0, 1, location=(4, 0))
+        TestSantoriniGameLogic._move_worker(board, 1, 0, location=(0, 4))
+        TestSantoriniGameLogic._move_worker(board, 1, 1, location=(4, 4))
+
+        for i in range(5):
+            for j in range(5):
+                if i in (0, 4) and j in (0, 4):
+                    board.board_height[i][j] = corner_height
+                else:
+                    board.board_height[i][j] = 3
         return board
 
     @staticmethod
