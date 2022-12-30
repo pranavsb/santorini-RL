@@ -20,16 +20,19 @@
     | Agents             | 2                                             |
     | Action Shape       | (1)                                           |
     | Action Values      | [0, 127]                                      |
-    | Observation Shape  | (5, 5, 3)                                     |
+    | Observation Shape  | (3, 5, 5)                                     |
     | Observation Values | [0, 4]                                        |
 
 
-    Action is 2 * 8 * 8 which represents choice of worker piece, direction to move and direction to build.
-    This is represented as a Discrete(128) action space.
+    Action space is 2 * 8 * 8 which represents choice of worker piece, direction to move and direction to build.
+    This is represented as a Discrete(128) action space. Creating a single discrete instead of MultiDiscrete space since
+    that's what many standard implementations have done. For example, the Chess implementation by PettingZoo.
 
-    Observation consists of three 5x5 planes. The first 5x5 plane is 1 for the agent's worker pieces and 0 otherwise.
-    The second 5x5 plane is 1 for the opponent's worker pieces and 0 otherwise. The third 5x5 plane represents the height
-    of the board at a given cell in the grid - this ranges from 0 (no buildings) to 4 (dome).
+    Observation space consists of three 5x5 planes, represented as Box(3, 5, 5). The first 5x5 plane is 1 for the
+    agent's worker pieces and 0 otherwise. The second 5x5 plane is 1 for the opponent's worker pieces and 0 otherwise.
+    The third 5x5 plane represents the height of the board at a given cell in the grid - this ranges from 0 (no buildings) to 4 (dome).
+    # TODO consider using a Dict space made up of multiple boxes instead. Should not make a big difference,
+    # though there are 5 * 5 * 3 wasted elements in each of the first two planes.
 
     Reward is 10 for winning, -10 for losing and -0.1 for every time step.
 
@@ -38,7 +41,7 @@ import gymnasium
 import numpy as np
 from typing import Optional
 
-from pettingzoo.utils.env import AgentID, ActionType
+from pettingzoo.utils.env import AgentID, ActionType, ObsType
 from gymnasium import spaces
 
 from pettingzoo import AECEnv
@@ -80,7 +83,7 @@ class raw_env(AECEnv):
             i: spaces.Dict(
                 {
                     "observation": spaces.Box(
-                        low=0, high=4, shape=(5, 5, 3), dtype=np.int8
+                        low=0, high=4, shape=(3, 5, 5), dtype=np.int8
                     ),
                     "action_mask": spaces.Box(low=0, high=1, shape=(128,), dtype=np.int8),
                 }
@@ -99,7 +102,7 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
 
     def step(self, action: ActionType) -> None:
-        return
+
         if (
                 self.terminations[self.agent_selection]
                 or self.truncations[self.agent_selection]
@@ -107,7 +110,7 @@ class raw_env(AECEnv):
             return self._was_dead_step(action)
 
         current_agent = self.agent_selection
-        current_player_id = self.agents.index(current_agent)
+        current_player_id = self.possible_agents.index(current_agent)
         # chosen_move = action_to_move(action)
         # assert self.board.is_legal_move(action)
         # TODO how to handle if agent plays when its not its turn?
@@ -131,6 +134,19 @@ class raw_env(AECEnv):
         self.agent_selection = (
             self._agent_selector.next()
         )  # Give turn to the next agent
+
+    def observe(self, agent: str) -> Optional[ObsType]:
+        player_id = self.possible_agents.index(agent)
+        observation = self.board.get_observation(self.possible_agents.index(agent))
+        legal_moves = (
+            self.board.get_legal_moves(player_id) if agent == self.agent_selection else []
+        )
+
+        action_mask = np.zeros(2 * 8 * 8, "int8")
+        for i in legal_moves:
+            action_mask[i] = 1
+
+        return {"observation": observation, "action_mask": action_mask}
 
     def reset(
             self,
@@ -183,3 +199,4 @@ if __name__ == "__main__":
     santorini_env = env()
     santorini_env.reset()
     santorini_env.render()
+    santorini_env.step(0)

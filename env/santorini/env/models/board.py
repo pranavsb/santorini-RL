@@ -1,5 +1,5 @@
 """
-Hold all game state in Board.
+Hold all game state in Board. Handles Santorini game logic as well.
 
 Handles the Worker pieces and keeps track of their positions and building status of every square on the grid.
 Also provides helper utilities for env.
@@ -15,7 +15,7 @@ from numpy.typing import ArrayLike
 class Board:
     def __init__(self):
         # keeps track of board height and buildings in 5x5 grid
-        self.board_height: ArrayLike = np.zeros((5, 5), dtype=np.uint8)
+        self.board_height: ArrayLike = np.zeros((5, 5), dtype=np.int8)
 
         # worker occupied locations
         self.occupied_locations = set()
@@ -140,3 +140,16 @@ class Board:
                     return False
         # dome is present
         return self.board_height[coordinate[0]][coordinate[1]] == 4
+
+    def _worker_grid_nparray(self, player_id: int):
+        worker_grid = np.zeros((5, 5), dtype=np.int8)
+        for worker_id, worker in self.workers[player_id]:
+            worker_grid[worker.location[0]][worker.location[1]] = 1
+        return worker_grid
+
+    def get_observation(self, player_id: int) -> ArrayLike:
+        self_workers = self._worker_grid_nparray(player_id)
+        opponent_workers = self._worker_grid_nparray(1 - player_id)
+        board_height = self.board_height
+
+        return np.stack([self_workers, opponent_workers, board_height], axis=0)
