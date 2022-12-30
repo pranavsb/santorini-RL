@@ -130,6 +130,8 @@ class raw_env(AECEnv):
             # small negative reward to incentivize faster game completion
             self.rewards[current_agent] = -0.1
 
+        self._accumulate_rewards()
+
         self.agent_selection = (
             self._agent_selector.next()
         )  # Give turn to the next agent
@@ -192,10 +194,3 @@ class raw_env(AECEnv):
 
     def action_space(self, agent: str) -> gymnasium.spaces.Space:
         return self.action_spaces[agent]
-
-
-if __name__ == "__main__":
-    santorini_env = env()
-    santorini_env.reset()
-    santorini_env.render()
-    santorini_env.step(0)

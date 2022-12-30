@@ -154,5 +154,6 @@ class Board:
         self_workers = self._worker_grid_nparray(player_id)
         opponent_workers = self._worker_grid_nparray(1 - player_id)
         board_height = self.board_height
-
-        return np.stack([self_workers, opponent_workers, board_height], axis=0)
+        observation_space = np.zeros((3, 5, 5), dtype=np.int8)
+        np.stack([self_workers, opponent_workers, board_height], axis=0, out=observation_space)
+        return observation_space
