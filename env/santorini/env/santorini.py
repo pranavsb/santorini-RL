@@ -117,8 +117,7 @@ class raw_env(AECEnv):
         assert self.board.is_legal_action(action, current_player_id)
         self.board.move_and_build(action, current_player_id)
 
-        # TODO test workers trapped by checking no legal moves left
-        opponent_has_legal_move = self.board.any_legal_moves()
+        opponent_has_legal_move = self.board.any_legal_moves(1 - current_player_id)
         # note that credit assignment is complicated as move+build is one action and the winning move is a "move" where
         # the build is inconsequential, hopefully it shouldn't be a big deal
         current_player_won = self.board.has_won()  # only current player's worker can be on level 3 since its their turn

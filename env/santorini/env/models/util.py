@@ -26,14 +26,14 @@ INDEX_TO_DIRECTION = {
 }
 
 DIRECTION_TO_COORDINATE = {
-    "N": (0, 1),
-    "NE": (1, 1),
-    "E": (1, 0),
-    "SE": (1, -1),
-    "S": (0, -1),
-    "SW": (-1, -1),
-    "W": (-1, 0),
-    "NW": (-1, 1),
+    "N": (-1, 0),
+    "NE": (-1, 1),
+    "E": (0, 1),
+    "SE": (1, 1),
+    "S": (1, 0),
+    "SW": (1, -1),
+    "W": (0, -1),
+    "NW": (-1, -1),
 }
 
 
@@ -57,9 +57,7 @@ def action_to_move(action: int) -> Tuple[int, str, str]:
     assert 0 <= action < 64, "Action is invalid after extracting worker."
     move = action // 8
     move_direction = index_to_direction(move)
-    action = action // 8
 
-    assert 0 <= action < 8, "Action is invalid after extracting move direction."
     build = action % 8
     build_direction = index_to_direction(build)
 
