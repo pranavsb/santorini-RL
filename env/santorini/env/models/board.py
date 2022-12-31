@@ -47,7 +47,7 @@ class Board:
         return True
 
     def any_legal_moves(self, player_id: int) -> bool:
-        return any(self.get_legal_moves(player_id, any_legal=True))
+        return len(self.get_legal_moves(player_id, any_legal=True)) > 0
 
     def get_legal_moves(self, player_id: int, any_legal: bool = False) -> List[int]:
         workers = self.workers[player_id]
@@ -64,14 +64,16 @@ class Board:
         return legal_moves
 
     def has_won(self):
-        # returns if any worker is present on level 3, environment handles who winner should be
+        # returns player_id if any worker is present on level 3 or opponents workers trapped
         for player_id in range(2):
             for worker in self.workers[player_id]:
                 x, y = worker.location[0], worker.location[1]
                 assert self.board_height[x][y] < 4, "how is worker standing on a dome?"
                 if self.board_height[x][y] == 3:
-                    return True
-        return False
+                    return player_id
+            if not self.any_legal_moves(player_id):
+                return 1 - player_id
+        return -1
 
     def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
         assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome?"

@@ -27,6 +27,7 @@ def play_manually():
         board.move_and_build(action, current_player)
         current_player = (current_player + 1) % 2
     print("GAME OVER!")
+    print_board()
 
 
 def invalid_input(move):

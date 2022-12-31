@@ -116,14 +116,12 @@ class raw_env(AECEnv):
         assert self.board.is_legal_action(action, current_player_id)
         self.board.move_and_build(action, current_player_id)
 
-        opponent_has_legal_move = self.board.any_legal_moves(1 - current_player_id)
         # note that credit assignment is complicated as move+build is one action and the winning move is a "move" where
         # the build is inconsequential, hopefully it shouldn't be a big deal
-        current_player_won = self.board.has_won()  # only current player's worker can be on level 3 since its their turn
-
-        game_over = not opponent_has_legal_move or current_player_won
+        winning_player_id = self.board.has_won()
+        game_over = winning_player_id != -1
         if game_over:
-            self.set_game_result(current_player_id, reward_scaling_factor=10)
+            self.set_game_result(winning_player_id, reward_scaling_factor=10)
         else:
             # small negative reward to incentivize faster game completion
             self.rewards[current_agent] = -0.1

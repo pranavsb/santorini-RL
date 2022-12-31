@@ -7,13 +7,13 @@ from util import action_to_move, move_to_action, INDEX_TO_DIRECTION
 class TestSantoriniGameLogic(unittest.TestCase):
     def test_detect_win_basic(self):
         board = Board()
-        self.assertFalse(board.has_won(), "no winners on init.")
+        self.assertEqual(-1, board.has_won(), "no winners on init.")
         board.board_height += 1
-        self.assertFalse(board.has_won(), "no winners on level one.")
+        self.assertEqual(-1, board.has_won(), "no winners on level one.")
         board.board_height += 1
-        self.assertFalse(board.has_won(), "no winners on level two.")
+        self.assertEqual(-1, board.has_won(), "no winners on level two.")
         board.board_height += 1
-        self.assertTrue(board.has_won(), "winners on level three.")
+        self.assertNotEqual(-1, board.has_won(), "winners on level three.")
 
     def test_detect_win_on_worker_jump(self):
         board = Board()
@@ -21,44 +21,44 @@ class TestSantoriniGameLogic(unittest.TestCase):
 
         TestSantoriniGameLogic._move_worker(board, location=(0, 0))
 
-        self.assertFalse(board.has_won(), "no winners on init.")
+        self.assertEqual(-1, board.has_won(), "no winners on init.")
         board.board_height[0][0] += 1
-        self.assertFalse(board.has_won(), "no winners on level one.")
+        self.assertEqual(-1, board.has_won(), "no winners on level one.")
         board.board_height[0][0] += 1
-        self.assertFalse(board.has_won(), "no winners on level two.")
+        self.assertEqual(-1, board.has_won(), "no winners on level two.")
         board.board_height[0][0] += 1
-        self.assertTrue(board.has_won(), "winners on level three.")
+        self.assertEqual(0, board.has_won(), "winners on level three.")
 
     def test_detect_win_on_worker_move_illegal_build(self):
         # once a move to level 3 is accomplished, the build part of the action doesn't matter
         board = TestSantoriniGameLogic._one_move_win_board()
         # no winners yet
-        self.assertFalse(board.has_won())
+        self.assertEqual(-1, board.has_won())
 
         # every move with worker 0 is a legal winning move, irrespective of build step
         for action in range(64):
             self.assertTrue(board.is_legal_action(action, 0))
             board.move_and_build(action, 0)
-            self.assertTrue(board.has_won())
+            self.assertEqual(0, board.has_won())
             board = TestSantoriniGameLogic._one_move_win_board()
 
     def test_no_win_on_height_zero(self):
         board = TestSantoriniGameLogic._one_move_win_board()
         # no winners yet
-        self.assertFalse(board.has_won())
+        self.assertEqual(-1, board.has_won())
 
         # all other workers have no winning move
         for action in range(65, 128):
             # player 0 worker 1
             if board.is_legal_action(action, 0):
                 board.move_and_build(action, 0)
-            self.assertFalse(board.has_won())
+            self.assertEqual(-1, board.has_won())
             board = TestSantoriniGameLogic._one_move_win_board()
         for action in range(128):
             # player 1 both workers
             if board.is_legal_action(action, 1):
                 board.move_and_build(action, 1)
-            self.assertFalse(board.has_won())
+            self.assertEqual(-1, board.has_won())
             board = TestSantoriniGameLogic._one_move_win_board()
 
     def test_no_legal_actions(self):
@@ -137,6 +137,99 @@ class TestSantoriniGameLogic(unittest.TestCase):
 
         self.assertFalse(board._is_occupied((1, 1)))  # empty
         self.assertTrue(board._can_move(from_coordinate, (1, 1)))
+
+    def test_legal_action_mask_one_legal_move(self):
+        board = TestSantoriniGameLogic._trapped_board()
+
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] == 3:
+                    board.board_height[i][j] = 4  # replace with dome
+
+        board.board_height[0][1] = 0
+
+        # no legal move for player 1
+        self.assertFalse(board.any_legal_moves(1))
+        self.assertEqual([], board.get_legal_moves(1))
+        for action in range(128):
+            self.assertFalse(board.is_legal_action(action, 1))
+
+        # no legal move for player 0 worker 1
+        for action in range(64, 128):
+            self.assertFalse(board.is_legal_action(action, 0))
+
+        # one legal move for player 0 worker 0
+        self.assertTrue(board.any_legal_moves(0))
+        # player 0, worker 0, move direction E, build direction W
+        self.assertEqual([22], board.get_legal_moves(0))
+
+    def test_legal_action_mask_one_legal_move(self):
+        board = TestSantoriniGameLogic._trapped_board()
+
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] == 3:
+                    board.board_height[i][j] = 4  # replace with dome
+
+        board.board_height[0][1] = 0
+
+        # no legal move for player 1
+        self.assertFalse(board.any_legal_moves(1))
+        self.assertEqual([], board.get_legal_moves(1))
+        for action in range(128):
+            self.assertFalse(board.is_legal_action(action, 1))
+
+        # no legal move for player 0 worker 1
+        for action in range(64, 128):
+            self.assertFalse(board.is_legal_action(action, 0))
+
+        # one legal move for player 0 worker 0
+        self.assertTrue(board.any_legal_moves(0))
+        # player 0, worker 0, move direction E, build direction W
+        self.assertEqual([22], board.get_legal_moves(0))
+
+    def test_legal_action_mask_four_legal_moves(self):
+        board = TestSantoriniGameLogic._trapped_board()
+
+        for i in range(5):
+            for j in range(5):
+                if board.board_height[i][j] == 3:
+                    board.board_height[i][j] = 4  # replace with dome
+
+        board.board_height[0][1] = 0
+        board.board_height[1][1] = 0
+
+        # no legal move for player 1
+        self.assertFalse(board.any_legal_moves(1))
+        self.assertEqual([], board.get_legal_moves(1))
+        for action in range(128):
+            self.assertFalse(board.is_legal_action(action, 1))
+
+        # no legal move for player 0 worker 1
+        for action in range(64, 128):
+            self.assertFalse(board.is_legal_action(action, 0))
+
+        # four legal moves for player 0 worker 0
+        self.assertTrue(board.any_legal_moves(0))
+        self.assertEqual(4, len(board.get_legal_moves(0)))
+        # player 0, worker 0, move direction E, build direction S
+        self.assertIn(20, board.get_legal_moves(0))
+        # player 0, worker 0, move direction E, build direction W
+        self.assertIn(22, board.get_legal_moves(0))
+        # player 0, worker 0, move direction SE, build direction N
+        self.assertIn(24, board.get_legal_moves(0))
+        # player 0, worker 0, move direction SE, build direction NW
+        self.assertIn(31, board.get_legal_moves(0))
+
+    def test_workers_trapped(self):
+        board = TestSantoriniGameLogic._trapped_board()
+
+        # no legal moves for either player
+        self.assertFalse(board.any_legal_moves(0))
+        self.assertFalse(board.any_legal_moves(1))
+
+        # since both players are trapped, choice of winner is arbitrary
+        self.assertNotEqual(-1, board.has_won())
 
     @staticmethod
     def _one_move_win_board():
