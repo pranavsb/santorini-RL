@@ -1,1 +1,2 @@
 pettingzoo==1.22.3
+import numpy==1.21.6
