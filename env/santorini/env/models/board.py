@@ -7,6 +7,7 @@ Also provides helper utilities for env.
 
 from typing import List, Dict, Tuple
 from worker import Worker
+import gymnasium
 from util import *
 import numpy as np
 from numpy.typing import ArrayLike
@@ -27,6 +28,8 @@ class Board:
             1: [Worker(player_id=1, worker_id=0, occupied=self.occupied_locations),
                                  Worker(player_id=1, worker_id=1, occupied=self.occupied_locations)]
         }  # randomize worker placement for now, later can train RL to do it
+
+        self.winner_decided = False  # just for sanity check assertions
 
     def is_legal_action(self, action: int, player_id: int) -> bool:
         worker_id, move_direction, build_direction = action_to_move(action)
@@ -50,6 +53,8 @@ class Board:
         return len(self.get_legal_moves(player_id, any_legal=True)) > 0
 
     def get_legal_moves(self, player_id: int, any_legal: bool = False) -> List[int]:
+        if self.winner_decided:
+            gymnasium.logger.warn("Getting legal moves after game winner decided.")
         workers = self.workers[player_id]
         legal_moves = []
         for worker_id in range(2):
@@ -70,21 +75,27 @@ class Board:
                 x, y = worker.location[0], worker.location[1]
                 assert self.board_height[x][y] < 4, "how is worker standing on a dome?"
                 if self.board_height[x][y] == 3:
+                    gymnasium.logger.info('winner decided {} by board height {},{}'.format(player_id, x, y))
+                    for row in self.board_height:
+                        print(row)
+                    self.winner_decided = True
                     return player_id
             if not self.any_legal_moves(player_id):
+                gymnasium.logger.info('winner decided {} by no opponent legal moves'.format(1-player_id))
+                self.winner_decided = True
                 return 1 - player_id
         return -1
 
     def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
-        # assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome? {}".format(self.board_height)
         return within_grid_bounds(to_coordinate) and self._height_jump_valid(from_coordinate, to_coordinate) and not self._is_occupied(to_coordinate)
 
     def _can_build(self, start_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
+        if not within_grid_bounds(to_coordinate):
+            return False
         # make sure that if it is occupied, it is due to the same worker piece that's being played
-        if start_coordinate == to_coordinate:
-            return True
+        not_occupied = start_coordinate == to_coordinate or not self._is_occupied(to_coordinate)
         # make sure dome doesn't already exist
-        return within_grid_bounds(to_coordinate) and not self._is_occupied(to_coordinate) and self.board_height[to_coordinate[0]][to_coordinate[1]] < 4
+        return not_occupied and self.board_height[to_coordinate[0]][to_coordinate[1]] < 4
 
     def generate_printable_board(self) -> List[List[str]]:
         printable_board = [["" for _ in range(5)] for _ in range(5)]
@@ -120,13 +131,16 @@ class Board:
             1: [Worker(player_id=1, worker_id=0, occupied=self.occupied_locations),
                 Worker(player_id=1, worker_id=1, occupied=self.occupied_locations)]
         }
+        self.winner_decided = False
 
     def move_and_build(self, action: int, player_id: int) -> None:
+        assert not self.winner_decided, "why move is played after winner decided?"
         worker_id, move_direction, build_direction = action_to_move(action)
-
         # update worker location
         move_coordinate = direction_to_coordinate(move_direction)
         worker = self.workers[player_id][worker_id]
+        gymnasium.logger.debug("action: P{}W{} move {} build {} worker at:({}, {})".format(player_id, worker_id,
+              move_direction, build_direction, worker.location[0], worker.location[1]))
         worker.location = (worker.location[0] + move_coordinate[0], worker.location[1] + move_coordinate[1])
 
         # if moved to level 3, game is over
@@ -137,9 +151,9 @@ class Board:
         # build on the board
         build_coordinate = direction_to_coordinate(build_direction)
         build_location = (worker.location[0] + build_coordinate[0], worker.location[1] + build_coordinate[1])
-        # if build is out of bounds, the move is a winning one
-        if within_grid_bounds(build_location):
-            self.board_height[build_location[0]][build_location[1]] += 1
+        # # if build is out of bounds, the move is a winning one
+        # if within_grid_bounds(build_location):
+        self.board_height[build_location[0]][build_location[1]] += 1
 
     def _height_jump_valid(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
         return self.board_height[from_coordinate[0]][from_coordinate[1]] + 1 >= self.board_height[to_coordinate[0]][to_coordinate[1]]

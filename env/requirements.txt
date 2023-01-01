@@ -1,2 +1,3 @@
 pettingzoo==1.22.3
-import numpy==1.21.6
+numpy==1.21.6
+gymnasium==0.27.0

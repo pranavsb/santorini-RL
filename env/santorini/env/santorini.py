@@ -34,9 +34,10 @@
     # TODO consider using a Dict space made up of multiple boxes instead. Should not make a big difference, though
     # there are 5 * 5 * 3 wasted elements in each of the first two planes.
 
-    Reward is 10 for winning, -10 for losing and -0.1 for every time step.
+    Reward is 1 for winning, -1 for losing.
 
 """
+
 import gymnasium
 import numpy as np
 from typing import Optional
@@ -102,7 +103,6 @@ class raw_env(AECEnv):
         self.render_mode = render_mode
 
     def step(self, action: ActionType) -> None:
-
         if (
                 self.terminations[self.agent_selection]
                 or self.truncations[self.agent_selection]
@@ -121,11 +121,7 @@ class raw_env(AECEnv):
         winning_player_id = self.board.has_won()
         game_over = winning_player_id != -1
         if game_over:
-            self.set_game_result(winning_player_id, reward_scaling_factor=1)
-        # else:
-        #     # small negative reward to incentivize faster game completion
-        #     # self.rewards = {i: 0 for i in self.agents}
-        #     self.rewards[current_agent] = -0.1
+            self.set_game_result(winning_player_id)
 
         self._accumulate_rewards()
 
@@ -173,12 +169,13 @@ class raw_env(AECEnv):
         self.rewards[agent_id_to_name(1)] = reward if winning_player_id == 0 else -reward
         self.rewards[agent_id_to_name(2)] = reward if winning_player_id == 1 else -reward
         for i in self.agents:
+            gymnasium.logger.info('terminate ', i)
             self.terminations[i] = True
             self.infos[i] = {"legal_moves": []}
 
     def render(self) -> None:
         """
-        This is a classic environment so it will support only ASCII stdout as a render.
+        This is a classic environment and we support only ASCII stdout as a render.
         :return: None, prints to stdout
         """
         printable_board = self.board.generate_printable_board()
