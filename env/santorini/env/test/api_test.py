@@ -1,4 +1,4 @@
-from pettingzoo.test import api_test, parallel_api_test
+from pettingzoo.test import api_test
 from env.santorini.env.santorini import env
 
 santorini_env = env()
