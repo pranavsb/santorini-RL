@@ -151,7 +151,7 @@ class raw_env(AECEnv):
         self.has_reset = True
         self.agents = self.possible_agents[:]
         # reset game state
-        self.board.reset()
+        self.board = Board()
 
         # selects the first agent
         self._agent_selector.reinit(self.agents)
@@ -188,3 +188,6 @@ class raw_env(AECEnv):
 
     def action_space(self, agent: str) -> gymnasium.spaces.Space:
         return self.action_spaces[agent]
+
+    def close(self):
+        pass
