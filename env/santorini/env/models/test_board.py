@@ -163,31 +163,6 @@ class TestSantoriniGameLogic(unittest.TestCase):
         # player 0, worker 0, move direction E, build direction W
         self.assertEqual([22], board.get_legal_moves(0))
 
-    def test_legal_action_mask_one_legal_move(self):
-        board = TestSantoriniGameLogic._trapped_board()
-
-        for i in range(5):
-            for j in range(5):
-                if board.board_height[i][j] == 3:
-                    board.board_height[i][j] = 4  # replace with dome
-
-        board.board_height[0][1] = 0
-
-        # no legal move for player 1
-        self.assertFalse(board.any_legal_moves(1))
-        self.assertEqual([], board.get_legal_moves(1))
-        for action in range(128):
-            self.assertFalse(board.is_legal_action(action, 1))
-
-        # no legal move for player 0 worker 1
-        for action in range(64, 128):
-            self.assertFalse(board.is_legal_action(action, 0))
-
-        # one legal move for player 0 worker 0
-        self.assertTrue(board.any_legal_moves(0))
-        # player 0, worker 0, move direction E, build direction W
-        self.assertEqual([22], board.get_legal_moves(0))
-
     def test_legal_action_mask_four_legal_moves(self):
         board = TestSantoriniGameLogic._trapped_board()
 

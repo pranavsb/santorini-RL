@@ -121,10 +121,11 @@ class raw_env(AECEnv):
         winning_player_id = self.board.has_won()
         game_over = winning_player_id != -1
         if game_over:
-            self.set_game_result(winning_player_id, reward_scaling_factor=10)
-        else:
-            # small negative reward to incentivize faster game completion
-            self.rewards[current_agent] = -0.1
+            self.set_game_result(winning_player_id, reward_scaling_factor=1)
+        # else:
+        #     # small negative reward to incentivize faster game completion
+        #     # self.rewards = {i: 0 for i in self.agents}
+        #     self.rewards[current_agent] = -0.1
 
         self._accumulate_rewards()
 
@@ -134,7 +135,7 @@ class raw_env(AECEnv):
 
     def observe(self, agent: str) -> Optional[ObsType]:
         player_id = self.possible_agents.index(agent)
-        observation = self.board.get_observation(self.possible_agents.index(agent))
+        observation = self.board.get_observation(player_id)
         legal_moves = (
             self.board.get_legal_moves(player_id) if agent == self.agent_selection else []
         )
@@ -156,16 +157,16 @@ class raw_env(AECEnv):
         # reset game state
         self.board.reset()
 
+        # selects the first agent
+        self._agent_selector.reinit(self.agents)
+        self._agent_selector.reset()
+        self.agent_selection = self._agent_selector.reset()
+
         self.rewards = {i: 0 for i in self.agents}
         self._cumulative_rewards = {i: 0 for i in self.agents}
         self.terminations = {i: False for i in self.agents}
         self.truncations = {i: False for i in self.agents}
         self.infos = {i: {} for i in self.agents}
-
-        # selects the first agent
-        self._agent_selector.reinit(self.agents)
-        self._agent_selector.reset()
-        self.agent_selection = self._agent_selector.reset()
 
     def set_game_result(self, winning_player_id: int, reward_scaling_factor=1):
         reward = reward_scaling_factor

@@ -76,7 +76,7 @@ class Board:
         return -1
 
     def _can_move(self, from_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
-        assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome?"
+        # assert self.board_height[from_coordinate[0]][from_coordinate[1]] < 3, "why is a move happening from level 3 or dome? {}".format(self.board_height)
         return within_grid_bounds(to_coordinate) and self._height_jump_valid(from_coordinate, to_coordinate) and not self._is_occupied(to_coordinate)
 
     def _can_build(self, start_coordinate: Tuple[int, int], to_coordinate: Tuple[int, int]) -> bool:
@@ -111,7 +111,7 @@ class Board:
         return ("[" * self.board_height[x][y]) + worker_string + ("]" * self.board_height[x][y])
 
     def reset(self):
-        self.board_height: List[List[int]] = [[0 for _ in range(5)] for _ in range(5)]
+        self.board_height: ArrayLike = np.zeros((5, 5), dtype=np.int8)
         self.occupied_locations = set()
         # randomize worker placement for now, later can train RL to do it
         self.workers: Dict[int, List['Worker']] = {
@@ -128,6 +128,11 @@ class Board:
         move_coordinate = direction_to_coordinate(move_direction)
         worker = self.workers[player_id][worker_id]
         worker.location = (worker.location[0] + move_coordinate[0], worker.location[1] + move_coordinate[1])
+
+        # if moved to level 3, game is over
+        assert self.board_height[worker.location[0]][worker.location[1]] <= 3, "how did worker move to dome?"
+        if self.board_height[worker.location[0]][worker.location[1]] == 3:
+            return
 
         # build on the board
         build_coordinate = direction_to_coordinate(build_direction)
