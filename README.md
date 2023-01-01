@@ -5,7 +5,7 @@ This is a PettingZoo environment (similar to OpenAI Gym for multi-agent tasks) f
 
 Using this environment, different RL techniques like PPO and DQN to solve Santorini are attempted.
 
-See `/env` for PettingZoo environment and `/model` for RL code and models.
+See `/env` for PettingZoo environment and `/algorithms` for RL code and models.
 
 Environment:
 
