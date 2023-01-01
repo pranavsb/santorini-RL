@@ -1,7 +1,7 @@
 import unittest
 
-from board import Board
-from util import action_to_move, move_to_action, INDEX_TO_DIRECTION
+from ..models.board import Board
+from ..models.util import action_to_move, move_to_action, INDEX_TO_DIRECTION
 
 
 class TestSantoriniGameLogic(unittest.TestCase):
