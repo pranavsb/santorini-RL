@@ -3,8 +3,9 @@ Play the board game Santorini with this Reinforcement Learning agent and custom 
 
 This is a PettingZoo environment (similar to OpenAI Gym for multi-agent tasks) for the board game [Santorini](https://boardgamegeek.com/boardgame/194655/santorini).
 
-Using this environment, different RL techniques from [stable-baselines3](https://github.com/DLR-RM/stable-baselines3) to solve Santorini are attempted.
+Using this environment, different RL techniques like PPO and DQN to solve Santorini are attempted.
 
+See `/env` for PettingZoo environment and `/model` for RL code and models.
 
 Environment:
 
