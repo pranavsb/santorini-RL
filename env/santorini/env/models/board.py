@@ -76,8 +76,8 @@ class Board:
                 assert self.board_height[x][y] < 4, "how is worker standing on a dome?"
                 if self.board_height[x][y] == 3:
                     gymnasium.logger.info('winner decided {} by board height {},{}'.format(player_id, x, y))
-                    for row in self.board_height:
-                        print(row)
+                    for row in self.generate_printable_board():
+                        gymnasium.logger.info("".join(row))
                     self.winner_decided = True
                     return player_id
             if not self.any_legal_moves(player_id):
