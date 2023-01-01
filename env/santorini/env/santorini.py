@@ -48,8 +48,8 @@ from gymnasium import spaces
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 
-from models.board import Board
-from util import agent_id_to_name
+from .models.board import Board
+from .models.util import agent_id_to_name
 
 
 def env(render_mode=None):

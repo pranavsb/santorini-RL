@@ -6,11 +6,12 @@ Also provides helper utilities for env.
 """
 
 from typing import List, Dict, Tuple
-from worker import Worker
 import gymnasium
-from util import *
 import numpy as np
 from numpy.typing import ArrayLike
+
+from .worker import Worker
+from .util import *
 
 
 class Board:
