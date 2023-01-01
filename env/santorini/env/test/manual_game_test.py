@@ -16,7 +16,7 @@ KEYBOARD_DIRECTION_TO_INDEX = {
 
 def play_manually():
     current_player = 0
-    while not board.has_won():
+    while board.has_won() == -1:
         print_board()
         move_input = input("Player {}: ".format(current_player))
         while invalid_input(move_input):
