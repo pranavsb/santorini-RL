@@ -42,4 +42,4 @@ Reuseable PettingZoo environment (similar to OpenAI Gym) for the Santorini board
     agent's worker pieces and 0 otherwise. The second 5x5 plane is 1 for the opponent's worker pieces and 0 otherwise.
     The third 5x5 plane represents the height of the board at a given cell in the grid - this ranges from 0 (no buildings) to 4 (dome).
     
-    Reward is 10 for winning, -10 for losing and -0.1 for every time step.
+    Reward is 1 for winning, -1 for losing.

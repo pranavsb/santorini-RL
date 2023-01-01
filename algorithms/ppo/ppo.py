@@ -49,25 +49,3 @@ if __name__ == "__main__":
         local_dir="E:/projects/santorini-RL/ray_results/santorini",
         config=config.to_dict(),
     )
-
-    # config = (
-    #     ApexDDPGConfig()
-    #         .environment("santorini")
-    #         .resources(num_gpus=1)
-    #         .rollouts(num_rollout_workers=1)
-    #         .multi_agent(
-    #         policies=santorini_env.get_agent_ids(),
-    #         policy_mapping_fn=(lambda agent_id, *args, **kwargs: agent_id),
-    #     )
-    # )
-    #
-    # tune.Tuner(
-    #     "APEX_DDPG",
-    #     run_config=air.RunConfig(
-    #         stop={"episodes_total": 60000},
-    #         checkpoint_config=air.CheckpointConfig(
-    #             checkpoint_frequency=10,
-    #         ),
-    #     ),
-    #     param_space=config,
-    # ).fit()
