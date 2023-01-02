@@ -1,5 +1,5 @@
-# import stable_baselines3
-# from supersuit import pettingzoo_env_to_vec_env_v1
+# Source: https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_independent_learning.py
+# NOTE: This code doesn't work, needs changes to rllib/pettingzoo
 import os
 from ray import air, tune
 from ray.tune.registry import register_env

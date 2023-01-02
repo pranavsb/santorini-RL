@@ -1,3 +1,5 @@
+# Source: https://github.com/ray-project/ray/blob/master/rllib/examples/multi_agent_independent_learning.py
+# NOTE: This code doesn't work, needs changes to rllib/pettingzoo
 from ray import air, tune
 from ray.tune.registry import register_env
 from ray.rllib.algorithms.apex_ddpg import ApexDDPGConfig
