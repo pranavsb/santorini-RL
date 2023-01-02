@@ -182,6 +182,7 @@ class raw_env(AECEnv):
 
         for printable_row in printable_board:
             print(printable_row)
+        print()  # add extra line to differentiate multiple renders on stdout
 
     def observation_space(self, agent: AgentID) -> gymnasium.spaces.Space:
         return self.observation_spaces[agent]

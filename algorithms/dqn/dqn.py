@@ -3,12 +3,12 @@ import argparse
 import os
 from copy import deepcopy
 from typing import Optional, Tuple
+from datetime import datetime
 
-import gym
 import gymnasium
 import numpy as np
 import torch
-from env.santorini.env.santorini import env
+from santorini.env.santorini import env
 from torch.utils.tensorboard import SummaryWriter
 
 from tianshou.data import Collector, VectorReplayBuffer
@@ -24,15 +24,6 @@ from tianshou.trainer import offpolicy_trainer
 from tianshou.utils import TensorboardLogger
 from tianshou.utils.net.common import Net
 
-
-# santorini_env = PettingZooEnv(env(render_mode="human"))
-#
-# obs = santorini_env.reset()
-# santorini_env.render()
-# policy = MultiAgentPolicyManager([RandomPolicy(), RandomPolicy()], santorini_env)
-# vector_env = DummyVectorEnv([lambda: santorini_env])
-# collector = Collector(policy, vector_env)
-# result = collector.collect(n_episode=1, render=.1)
 
 def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -95,6 +86,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu'
     )
+    parser.add_argument('--resume', action="store_true")
     return parser
 
 
@@ -133,13 +125,16 @@ def get_agents(
             target_update_freq=args.target_update_freq
         )
         if args.resume_path:
+            print("loading saved agent from", args.resume_path)
             agent_learn.load_state_dict(torch.load(args.resume_path))
 
     if agent_opponent is None:
         if args.opponent_path:
+            print("Using opponent agent from ", args.opponent_path)
             agent_opponent = deepcopy(agent_learn)
             agent_opponent.load_state_dict(torch.load(args.opponent_path))
         else:
+            print("using RandomPolicy opponent")
             agent_opponent = RandomPolicy()
 
     if args.agent_id == 1:
@@ -192,6 +187,31 @@ def train_agent(
     writer.add_text("args", str(args))
     logger = TensorboardLogger(writer)
 
+    # restore model from checkpoint
+    if args.resume:
+        if hasattr(args, 'model_checkpoint_path'):
+            model_checkpoint_path = args.model_checkpoint_path
+        else:
+            model_checkpoint_path = os.path.join(
+                    args.logdir, 'santorini', 'dqn_policy', 'policy.pth'
+                )
+        print("restoring model from checkpoint", model_checkpoint_path)
+        checkpoint = torch.load(model_checkpoint_path, map_location=args.device)
+        policy.load_state_dict(checkpoint["model"])
+        optim.load_state_dict(checkpoint["optim"])
+
+    def save_checkpoint_fn(epoch, env_step, gradient_step):
+        ckpt_path = os.path.join(
+                    args.logdir, 'santorini', 'dqn_policy', 'checkpoint_{}_{}.pth'.format(datetime.today().strftime('%Y-%m-%d_%H-%M-%S'), epoch)
+                )
+        torch.save(
+            {
+                "model": policy.state_dict(),
+                "optim": optim.state_dict(),
+            }, ckpt_path
+        )
+        return ckpt_path
+
     # ======== callback functions used during training =========
     def save_best_fn(policy):
         if hasattr(args, 'model_save_path'):
@@ -233,7 +253,9 @@ def train_agent(
         update_per_step=args.update_per_step,
         logger=logger,
         test_in_train=False,
-        reward_metric=reward_metric
+        reward_metric=reward_metric,
+        resume_from_log=args.resume,
+        save_checkpoint_fn=save_checkpoint_fn
     )
 
     return result, policy.policies[agents[args.agent_id - 1]]
@@ -259,5 +281,8 @@ def watch(
 
 # train the agent and watch its performance in a match!
 args = get_args()
-result, agent = train_agent(args)
-watch(args, agent)
+if args.watch:
+    watch(args)
+else:
+    result, agent = train_agent(args)
+    watch(args, agent)
