@@ -55,7 +55,7 @@ class Board:
 
     def get_legal_moves(self, player_id: int, any_legal: bool = False) -> List[int]:
         if self.winner_decided:
-            gymnasium.logger.warn("Getting legal moves after game winner decided.")
+            gymnasium.logger.info("Getting legal moves after game winner decided.")
         workers = self.workers[player_id]
         legal_moves = []
         for worker_id in range(2):
