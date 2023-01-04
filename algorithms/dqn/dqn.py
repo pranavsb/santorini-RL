@@ -126,13 +126,15 @@ def get_agents(
         )
         if args.resume_path:
             print("loading saved agent from", args.resume_path)
-            agent_learn.load_state_dict(torch.load(args.resume_path))
+            checkpoint = torch.load(args.resume_path, map_location=args.device)
+            agent_learn.load_state_dict(checkpoint["model"])
 
     if agent_opponent is None:
         if args.opponent_path:
             print("Using opponent agent from ", args.opponent_path)
             agent_opponent = deepcopy(agent_learn)
-            agent_opponent.load_state_dict(torch.load(args.opponent_path))
+            checkpoint = torch.load(args.opponent_path, map_location=args.device)
+            agent_opponent.load_state_dict(checkpoint["model"])
         else:
             print("using RandomPolicy opponent")
             agent_opponent = RandomPolicy()
@@ -185,7 +187,7 @@ def train_agent(
     log_path = os.path.join(args.logdir, 'santorini', 'dqn')
     writer = SummaryWriter(log_path)
     writer.add_text("args", str(args))
-    logger = TensorboardLogger(writer)
+    logger = TensorboardLogger(writer, save_interval=500)
 
     # restore model from checkpoint
     if args.resume:
@@ -206,7 +208,7 @@ def train_agent(
                 )
         torch.save(
             {
-                "model": policy.state_dict(),
+                "model": policy.policies[agents[args.agent_id - 1]].state_dict(),
                 "optim": optim.state_dict(),
             }, ckpt_path
         )
@@ -218,7 +220,7 @@ def train_agent(
             model_save_path = args.model_save_path
         else:
             model_save_path = os.path.join(
-                args.logdir, 'santorini', 'dqn_policy', 'policy.pth'
+                args.logdir, 'santorini', 'dqn_policy', 'best_{}.pth'.format(datetime.today().strftime('%Y-%m-%d_%H-%M-%S'))
             )
         torch.save(
             policy.policies[agents[args.agent_id - 1]].state_dict(), model_save_path
